@@ -34,7 +34,7 @@ export const Route = createFileRoute("/")({
 function Checkout() {
   const [step, setStep] = useState(1);
   const [accepted, setAccepted] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(passengers[0].id);
+  const [openId, setOpenId] = useState<string | null>(passengers[0]?.id ?? null);
   const [values, setValues] = useState<Record<string, PassengerValues>>({});
 
   const progress = useMemo(
