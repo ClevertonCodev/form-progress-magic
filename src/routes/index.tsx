@@ -1,13 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Lock, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Lock, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Stepper } from "@/components/checkout/Stepper";
+import { StepToggle } from "@/components/checkout/StepToggle";
 import { TermsStep } from "@/components/checkout/TermsStep";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { PassengerCard, passengerProgress, type PassengerValues } from "@/components/checkout/PassengerCard";
 import { passengers, subtotal } from "@/lib/checkout-data";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Checkout() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<1 | 2>(1);
   const [accepted, setAccepted] = useState(false);
   const [openId, setOpenId] = useState<string | null>(passengers[0]?.id ?? null);
   const [values, setValues] = useState<Record<string, PassengerValues>>({});
@@ -47,10 +48,15 @@ function Checkout() {
   const update = (pid: string, fieldId: string, value: string) =>
     setValues((prev) => ({ ...prev, [pid]: { ...(prev[pid] ?? {}), [fieldId]: value } }));
 
-  const goToForms = () => {
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  // Ao aceitar os termos, a tela desliza sozinha para o preenchimento.
+  useEffect(() => {
+    if (!accepted) return;
+    const t = setTimeout(() => {
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 550);
+    return () => clearTimeout(t);
+  }, [accepted]);
 
   return (
     <div className="min-h-screen pb-28">
@@ -64,24 +70,32 @@ function Checkout() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8">
-        <Stepper current={step} />
+        <StepToggle step={step} onChange={setStep} formsEnabled={accepted} />
 
-        <h1 className="mt-8 text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="mt-7 text-2xl font-semibold tracking-tight text-foreground">
           {step === 1 ? "Termos de uso e resumo da compra" : "Dados dos passageiros"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {step === 1
-            ? "Confira o que você está comprando e aceite os termos para continuar."
+            ? "Leia e aceite os termos — a próxima etapa abre automaticamente."
             : `Preencha os dados de cada passageiro. ${completedCount} de ${passengers.length} concluídos.`}
         </p>
 
         {step === 1 ? (
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <div
+            key="terms"
+            className="mt-6 grid animate-in gap-6 fade-in slide-in-from-left-4 duration-300 lg:grid-cols-[1.4fr_1fr]"
+          >
             <TermsStep accepted={accepted} onAcceptedChange={setAccepted} />
             <OrderSummary />
           </div>
         ) : (
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <div
+            key="forms"
+            className="mt-6 animate-in space-y-6 fade-in slide-in-from-right-4 duration-300"
+          >
+            <OrderSummary />
+
             <div className="space-y-4">
               {passengers.map((p) => (
                 <PassengerCard
@@ -94,16 +108,10 @@ function Checkout() {
                 />
               ))}
             </div>
-            <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-              <OrderSummary />
-              <Button
-                variant="ghost"
-                onClick={() => setStep(1)}
-                className="w-full text-muted-foreground"
-              >
-                <ArrowLeft className="size-4" aria-hidden /> Voltar aos termos
-              </Button>
-            </div>
+
+            <Button variant="ghost" onClick={() => setStep(1)} className="text-muted-foreground">
+              <ArrowLeft className="size-4" aria-hidden /> Voltar aos termos
+            </Button>
           </div>
         )}
       </main>
@@ -130,25 +138,20 @@ function Checkout() {
             >
               {step === 1
                 ? accepted
-                  ? "Termos aceitos"
+                  ? "Termos aceitos — abrindo o formulário…"
                   : "Aceite os termos de uso para continuar"
                 : allComplete
                   ? "Todos os passageiros preenchidos"
                   : `Faltam ${passengers.length - completedCount} passageiro(s)`}
             </span>
 
-            {step === 1 ? (
-              <Button size="lg" disabled={!accepted} onClick={goToForms} className="min-w-52">
-                Continuar <ArrowRight className="size-4" aria-hidden />
-              </Button>
-            ) : (
-              <Button size="lg" disabled={!allComplete} className="min-w-52">
-                <ShoppingCart className="size-4" aria-hidden /> Adicionar no carrinho
-              </Button>
-            )}
+            <Button size="lg" disabled={step === 1 || !allComplete} className="min-w-52">
+              <ShoppingCart className="size-4" aria-hidden /> Adicionar no carrinho
+            </Button>
           </div>
         </div>
       </footer>
     </div>
   );
 }
+
