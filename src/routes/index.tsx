@@ -35,8 +35,11 @@ export const Route = createFileRoute("/")({
 function Checkout() {
   const [step, setStep] = useState<1 | 2>(1);
   const [accepted, setAccepted] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(passengers[0]?.id ?? null);
+  const [openIds, setOpenIds] = useState<string[]>(passengers.map((p) => p.id));
   const [values, setValues] = useState<Record<string, PassengerValues>>({});
+
+  // Toggle de apresentação para simular produto com/sem formulário
+  const [hasForm, setHasForm] = useState(true);
 
   const progress = useMemo(
     () => passengers.map((p) => passengerProgress(p, values[p.id] ?? {})),
@@ -48,31 +51,52 @@ function Checkout() {
   const update = (pid: string, fieldId: string, value: string) =>
     setValues((prev) => ({ ...prev, [pid]: { ...(prev[pid] ?? {}), [fieldId]: value } }));
 
-  // Ao aceitar os termos, a tela desliza sozinha para o preenchimento.
+  // Ao aceitar os termos, a tela desliza sozinha para o preenchimento, se houver formulário.
   useEffect(() => {
-    if (!accepted) return;
+    if (!accepted || !hasForm) return;
     const t = setTimeout(() => {
       setStep(2);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }, 550);
     return () => clearTimeout(t);
-  }, [accepted]);
+  }, [accepted, hasForm]);
 
   return (
     <div className="min-h-screen pb-28">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
           <span className="text-sm font-bold tracking-tight text-gradient-brand">Paytour</span>
-          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <Lock className="size-3.5" aria-hidden /> Compra segura
-          </span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 rounded-full border border-border bg-secondary p-1 text-xs">
+              <button
+                className={cn("rounded-full px-3 py-1 font-medium transition-colors", hasForm ? "bg-background shadow-sm" : "text-muted-foreground")}
+                onClick={() => setHasForm(true)}
+              >
+                Com Formulário
+              </button>
+              <button
+                className={cn("rounded-full px-3 py-1 font-medium transition-colors", !hasForm ? "bg-background shadow-sm" : "text-muted-foreground")}
+                onClick={() => {
+                  setHasForm(false);
+                  setStep(1); // Garante que volta pra tela de termos
+                }}
+              >
+                Sem Formulário
+              </button>
+            </div>
+            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Lock className="size-3.5" aria-hidden /> Compra segura
+            </span>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8">
-        <StepToggle step={step} onChange={setStep} formsEnabled={accepted} />
+        {hasForm && (
+          <StepToggle step={step} onChange={setStep} formsEnabled={accepted} />
+        )}
 
-        <h1 className="mt-7 text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className={cn("text-2xl font-semibold tracking-tight text-foreground", hasForm && "mt-7")}>
           {step === 1 ? "Termos de uso e resumo da compra" : "Dados dos passageiros"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -84,10 +108,13 @@ function Checkout() {
         {step === 1 ? (
           <div
             key="terms"
-            className="mt-6 grid animate-in gap-6 fade-in slide-in-from-left-4 duration-300 lg:grid-cols-[1.4fr_1fr]"
+            className={cn(
+              "mt-6 animate-in fade-in slide-in-from-left-4 duration-300",
+              !hasForm ? "grid gap-6 lg:grid-cols-[1.4fr_1fr]" : "block"
+            )}
           >
             <TermsStep accepted={accepted} onAcceptedChange={setAccepted} />
-            <OrderSummary />
+            {!hasForm && <OrderSummary />}
           </div>
         ) : (
           <div
@@ -102,8 +129,12 @@ function Checkout() {
                   key={p.id}
                   passenger={p}
                   values={values[p.id] ?? {}}
-                  open={openId === p.id}
-                  onToggle={() => setOpenId(openId === p.id ? null : p.id)}
+                  open={openIds.includes(p.id)}
+                  onToggle={() =>
+                    setOpenIds((prev) =>
+                      prev.includes(p.id) ? prev.filter((id) => id !== p.id) : [...prev, p.id]
+                    )
+                  }
                   onChange={(field, value) => update(p.id, field, value)}
                 />
               ))}
@@ -116,7 +147,7 @@ function Checkout() {
         )}
       </main>
 
-      <footer className="fixed inset-x-0 bottom-0 border-t border-border bg-card/95 backdrop-blur">
+      <footer className="fixed inset-x-0 bottom-0 border-t border-border bg-card/95 backdrop-blur z-50">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div>
             <span className="block text-xs font-medium text-muted-foreground">Subtotal</span>
@@ -138,14 +169,18 @@ function Checkout() {
             >
               {step === 1
                 ? accepted
-                  ? "Termos aceitos — abrindo o formulário…"
+                  ? hasForm ? "Termos aceitos — abrindo o formulário…" : "Termos aceitos"
                   : "Aceite os termos de uso para continuar"
                 : allComplete
                   ? "Todos os passageiros preenchidos"
                   : `Faltam ${passengers.length - completedCount} passageiro(s)`}
             </span>
 
-            <Button size="lg" disabled={step === 1 || !allComplete} className="min-w-52">
+            <Button 
+              size="lg" 
+              disabled={step === 1 ? (hasForm ? true : !accepted) : !allComplete} 
+              className="min-w-52"
+            >
               <ShoppingCart className="size-4" aria-hidden /> Adicionar no carrinho
             </Button>
           </div>
