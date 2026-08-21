@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Lock, ShoppingCart } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Lock, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StepToggle } from "@/components/checkout/StepToggle";
 import { TermsStep } from "@/components/checkout/TermsStep";
@@ -8,7 +8,6 @@ import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { PassengerCard, passengerProgress, type PassengerValues } from "@/components/checkout/PassengerCard";
 import { passengers, subtotal } from "@/lib/checkout-data";
 import { cn } from "@/lib/utils";
-
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -38,8 +37,18 @@ function Checkout() {
   const [openIds, setOpenIds] = useState<string[]>(passengers.map((p) => p.id));
   const [values, setValues] = useState<Record<string, PassengerValues>>({});
 
-  // Toggle de apresentação para simular produto com/sem formulário
-  const [hasForm, setHasForm] = useState(true);
+  // Paginação dos formulários
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
+  const totalPages = Math.ceil(passengers.length / itemsPerPage);
+  const currentPassengers = passengers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Toggle de apresentação para simular diferentes fluxos
+  type PresentationMode = "form-a" | "form-b" | "no-form";
+  const [mode, setMode] = useState<PresentationMode>("form-a");
 
   const progress = useMemo(
     () => passengers.map((p) => passengerProgress(p, values[p.id] ?? {})),
@@ -53,13 +62,13 @@ function Checkout() {
 
   // Ao aceitar os termos, a tela desliza sozinha para o preenchimento, se houver formulário.
   useEffect(() => {
-    if (!accepted || !hasForm) return;
+    if (!accepted || mode === "no-form") return;
     const t = setTimeout(() => {
       setStep(2);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }, 550);
     return () => clearTimeout(t);
-  }, [accepted, hasForm]);
+  }, [accepted, mode]);
 
   return (
     <div className="min-h-screen pb-28">
@@ -67,17 +76,26 @@ function Checkout() {
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
           <span className="text-sm font-bold tracking-tight text-gradient-brand">Paytour</span>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 rounded-full border border-border bg-secondary p-1 text-xs">
+            <div className="flex items-center gap-1 rounded-full border border-border bg-secondary p-1 text-xs">
               <button
-                className={cn("rounded-full px-3 py-1 font-medium transition-colors", hasForm ? "bg-background shadow-sm" : "text-muted-foreground")}
-                onClick={() => setHasForm(true)}
+                className={cn("rounded-full px-3 py-1 font-medium transition-colors", mode === "form-a" ? "bg-background shadow-sm" : "text-muted-foreground")}
+                onClick={() => setMode("form-a")}
               >
-                Com Formulário
+                Formulário (Resumo 1)
               </button>
               <button
-                className={cn("rounded-full px-3 py-1 font-medium transition-colors", !hasForm ? "bg-background shadow-sm" : "text-muted-foreground")}
+                className={cn("rounded-full px-3 py-1 font-medium transition-colors", mode === "form-b" ? "bg-background shadow-sm" : "text-muted-foreground")}
                 onClick={() => {
-                  setHasForm(false);
+                  setMode("form-b");
+                  setStep(1);
+                }}
+              >
+                Formulário (Resumo 2)
+              </button>
+              <button
+                className={cn("rounded-full px-3 py-1 font-medium transition-colors", mode === "no-form" ? "bg-background shadow-sm" : "text-muted-foreground")}
+                onClick={() => {
+                  setMode("no-form");
                   setStep(1); // Garante que volta pra tela de termos
                 }}
               >
@@ -92,11 +110,11 @@ function Checkout() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8">
-        {hasForm && (
+        {mode !== "no-form" && (
           <StepToggle step={step} onChange={setStep} formsEnabled={accepted} />
         )}
 
-        <h1 className={cn("text-2xl font-semibold tracking-tight text-foreground", hasForm && "mt-7")}>
+        <h1 className={cn("text-2xl font-semibold tracking-tight text-foreground", mode !== "no-form" && "mt-7")}>
           {step === 1 ? "Termos de uso e resumo da compra" : "Dados dos passageiros"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -110,21 +128,21 @@ function Checkout() {
             key="terms"
             className={cn(
               "mt-6 animate-in fade-in slide-in-from-left-4 duration-300",
-              !hasForm ? "grid gap-6 lg:grid-cols-[1.4fr_1fr]" : "block"
+              mode === "form-b" ? "block" : "grid gap-6 lg:grid-cols-[1.4fr_1fr]"
             )}
           >
             <TermsStep accepted={accepted} onAcceptedChange={setAccepted} />
-            {!hasForm && <OrderSummary />}
+            {mode !== "form-b" && <OrderSummary />}
           </div>
         ) : (
           <div
             key="forms"
             className="mt-6 animate-in space-y-6 fade-in slide-in-from-right-4 duration-300"
           >
-            <OrderSummary />
+            {mode === "form-b" && <OrderSummary />}
 
             <div className="space-y-4">
-              {passengers.map((p) => (
+              {currentPassengers.map((p) => (
                 <PassengerCard
                   key={p.id}
                   passenger={p}
@@ -140,7 +158,61 @@ function Checkout() {
               ))}
             </div>
 
-            <Button variant="ghost" onClick={() => setStep(1)} className="text-muted-foreground">
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border pt-4">
+                <span className="text-sm font-medium text-muted-foreground">
+                  {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, passengers.length)} de {passengers.length} passageiros
+                </span>
+                
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-3 gap-1 text-muted-foreground hover:text-foreground"
+                    disabled={currentPage === 1}
+                    onClick={() => {
+                      setCurrentPage((p) => Math.max(1, p - 1));
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  >
+                    <ChevronLeft className="size-4" aria-hidden /> Anterior
+                  </Button>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={cn(
+                        "h-8 min-w-8 rounded-md text-sm font-medium transition-colors",
+                        currentPage === page 
+                          ? "bg-primary text-primary-foreground" 
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      )}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-3 gap-1 text-muted-foreground hover:text-foreground"
+                    disabled={currentPage === totalPages}
+                    onClick={() => {
+                      setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  >
+                    Próxima <ChevronRight className="size-4" aria-hidden />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <Button variant="ghost" onClick={() => setStep(1)} className="mt-6 text-muted-foreground">
               <ArrowLeft className="size-4" aria-hidden /> Voltar aos termos
             </Button>
           </div>
@@ -169,7 +241,7 @@ function Checkout() {
             >
               {step === 1
                 ? accepted
-                  ? hasForm ? "Termos aceitos — abrindo o formulário…" : "Termos aceitos"
+                  ? mode !== "no-form" ? "Termos aceitos — abrindo o formulário…" : "Termos aceitos"
                   : "Aceite os termos de uso para continuar"
                 : allComplete
                   ? "Todos os passageiros preenchidos"
@@ -178,7 +250,7 @@ function Checkout() {
 
             <Button 
               size="lg" 
-              disabled={step === 1 ? (hasForm ? true : !accepted) : !allComplete} 
+              disabled={step === 1 ? (mode !== "no-form" ? true : !accepted) : !allComplete} 
               className="min-w-52"
             >
               <ShoppingCart className="size-4" aria-hidden /> Adicionar no carrinho

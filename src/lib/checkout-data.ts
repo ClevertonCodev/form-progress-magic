@@ -52,11 +52,11 @@ const baseFields: PassengerField[] = [
   { id: "cpf", label: "CPF", type: "cpf", required: true, placeholder: "000.000.000-00" },
 ];
 
-export const passengers: Passenger[] = [1, 2, 3].map((index) => ({
+export const passengers: Passenger[] = Array.from({ length: 12 }, (_, i) => i + 1).map((index) => ({
   id: `passageiro-${index}`,
   index,
-  kind: index === 3 ? "com-desconto" : "sem-desconto",
-  priceLabel: index === 3 ? "preço com desconto" : "preço sem desconto",
+  kind: index > 10 ? "com-desconto" : "sem-desconto",
+  priceLabel: index > 10 ? "preço com desconto" : "preço sem desconto",
   fields: baseFields,
 }));
 
