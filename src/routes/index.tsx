@@ -81,7 +81,7 @@ function Checkout() {
                 className={cn("rounded-full px-3 py-1 font-medium transition-colors", mode === "form-a" ? "bg-background shadow-sm" : "text-muted-foreground")}
                 onClick={() => setMode("form-a")}
               >
-                Formulário (Resumo 1)
+                Opção 1
               </button>
               <button
                 className={cn("rounded-full px-3 py-1 font-medium transition-colors", mode === "form-b" ? "bg-background shadow-sm" : "text-muted-foreground")}
@@ -90,7 +90,7 @@ function Checkout() {
                   setStep(1);
                 }}
               >
-                Formulário (Resumo 2)
+                Opção 2
               </button>
               <button
                 className={cn("rounded-full px-3 py-1 font-medium transition-colors", mode === "no-form" ? "bg-background shadow-sm" : "text-muted-foreground")}
