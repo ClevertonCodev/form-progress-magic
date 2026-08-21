@@ -1,13 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Lock, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Lock, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Stepper } from "@/components/checkout/Stepper";
+import { StepToggle } from "@/components/checkout/StepToggle";
 import { TermsStep } from "@/components/checkout/TermsStep";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { PassengerCard, passengerProgress, type PassengerValues } from "@/components/checkout/PassengerCard";
 import { passengers, subtotal } from "@/lib/checkout-data";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
