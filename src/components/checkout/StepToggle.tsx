@@ -2,8 +2,8 @@ import { FileText, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  step: 1 | 2;
-  onChange: (step: 1 | 2) => void;
+  step: 1 | 2 | 3;
+  onChange: (step: 1 | 2 | 3) => void;
   formsEnabled: boolean;
 }
 
@@ -23,11 +23,11 @@ export function StepToggle({ step, onChange, formsEnabled }: Props) {
         aria-hidden
         className={cn(
           "pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-[var(--ds-v2-radius-pill)] bg-card shadow-ds-md transition-transform duration-300 ease-out",
-          step === 2 && "translate-x-[calc(100%+0.25rem)]",
+          step >= 2 && "translate-x-[calc(100%+0.25rem)]",
         )}
       />
       {tabs.map((tab) => {
-        const active = step === tab.id;
+        const active = tab.id === 1 ? step === 1 : step >= 2;
         const disabled = tab.id === 2 && !formsEnabled;
         return (
           <button

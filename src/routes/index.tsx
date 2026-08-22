@@ -32,10 +32,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Checkout() {
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [accepted, setAccepted] = useState(false);
   const [openIds, setOpenIds] = useState<string[]>([passengers[0]?.id ?? ""]);
   const [values, setValues] = useState<Record<string, PassengerValues>>({});
+  const [values2, setValues2] = useState<Record<string, PassengerValues>>({});
 
   // Paginação dos formulários
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,16 +51,23 @@ function Checkout() {
   type PresentationMode = "form-a" | "form-b" | "no-form";
   const [mode, setMode] = useState<PresentationMode>("form-a");
 
+  const activeValues = step === 3 ? values2 : values;
+
   const progress = useMemo(
-    () => passengers.map((p) => passengerProgress(p, values[p.id] ?? {})),
-    [values],
+    () => passengers.map((p) => passengerProgress(p, activeValues[p.id] ?? {})),
+    [activeValues],
   );
   const completedCount = progress.filter((p) => p.complete).length;
   const allComplete = completedCount === passengers.length;
   const showStepToggle = mode !== "no-form" && accepted;
 
-  const update = (pid: string, fieldId: string, value: string) =>
-    setValues((prev) => ({ ...prev, [pid]: { ...(prev[pid] ?? {}), [fieldId]: value } }));
+  const update = (pid: string, fieldId: string, value: string) => {
+    if (step === 3) {
+      setValues2((prev) => ({ ...prev, [pid]: { ...(prev[pid] ?? {}), [fieldId]: value } }));
+    } else {
+      setValues((prev) => ({ ...prev, [pid]: { ...(prev[pid] ?? {}), [fieldId]: value } }));
+    }
+  };
 
   // Ao aceitar os termos, a tela desliza sozinha para o preenchimento, se houver formulário.
   useEffect(() => {
@@ -119,7 +127,11 @@ function Checkout() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {step === 1 ? "Termos de uso e resumo da compra" : "Dados dos passageiros"}
+              {step === 1
+                ? "Termos de uso e resumo da compra"
+                : step === 3
+                  ? "Segunda atividade do carrinho"
+                  : "Dados dos passageiros"}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {step === 1
@@ -148,6 +160,27 @@ function Checkout() {
           >
             {mode === "form-b" && <OrderSummary />}
 
+            {step === 3 && (
+              <div className="rounded-lg border border-border bg-surface-subtle p-5">
+                <h3 className="text-sm font-semibold text-foreground">Repetir dados?</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Deseja repetir os dados preenchidos na primeira atividade para esta?
+                </p>
+                <div className="mt-4 flex gap-3">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                      setValues2(values);
+                      setOpenIds([passengers[0]?.id ?? ""]);
+                    }}
+                  >
+                    Sim, preencher com os mesmos dados
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               {currentPassengers.map((p) => {
                 const previousProgress = p.index > 1 ? progress[p.index - 2] : undefined;
@@ -157,7 +190,7 @@ function Checkout() {
                   <PassengerCard
                     key={p.id}
                     passenger={p}
-                    values={values[p.id] ?? {}}
+                    values={activeValues[p.id] ?? {}}
                     open={openIds.includes(p.id)}
                     disabled={!unlocked}
                     onToggle={() =>
@@ -223,9 +256,31 @@ function Checkout() {
               </div>
             )}
 
-            <Button variant="ghost" onClick={() => setStep(1)} className="mt-6 text-muted-foreground">
-              <ArrowLeft className="size-4" aria-hidden /> Voltar aos termos
-            </Button>
+            {step === 2 && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setStep(3);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="mt-6 w-full sm:w-auto"
+              >
+                Preencher segunda atividade do carrinho <ChevronRight className="size-4 ml-2" aria-hidden />
+              </Button>
+            )}
+
+            {step === 3 && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setStep(2);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="mt-6 text-muted-foreground"
+              >
+                <ArrowLeft className="size-4" aria-hidden /> Voltar para primeira atividade
+              </Button>
+            )}
           </div>
         )}
       </main>

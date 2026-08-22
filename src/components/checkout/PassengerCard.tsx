@@ -151,7 +151,6 @@ export function PassengerCard({ passenger, values, open, disabled, onToggle, onC
                     className={cn(
                       "h-11 rounded-[var(--ds-v2-radius-md)] bg-card text-sm transition focus-visible:shadow-[var(--ds-v2-shadow-focus)]",
                       showError && "border-destructive",
-                      touched && valid && "border-success-border bg-success-surface",
                     )}
                   />
                 )}
