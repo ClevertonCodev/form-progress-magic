@@ -44,7 +44,10 @@ export function isFieldValid(field: PassengerField, value: string) {
 
 export function passengerProgress(passenger: Passenger, values: PassengerValues) {
   const required = passenger.fields.filter((f) => f.required);
-  const filled = required.filter((f) => isFieldValid(f, values[f.id] ?? "")).length;
+  const filled = required.filter((f) => {
+    const value = values[f.id] || (f.type === "country" ? "BR" : "");
+    return isFieldValid(f, value);
+  }).length;
   return { filled, total: required.length, complete: filled === required.length };
 }
 

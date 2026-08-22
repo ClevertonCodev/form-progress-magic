@@ -71,6 +71,11 @@ function Checkout() {
     return () => clearTimeout(t);
   }, [accepted, mode]);
 
+  useEffect(() => {
+    const nextPassenger = passengers.find((_, index) => !progress[index]?.complete);
+    setOpenIds(nextPassenger ? [nextPassenger.id] : []);
+  }, [progress]);
+
   return (
     <div className="min-h-screen pb-28">
       <header className="border-b border-border bg-card">
