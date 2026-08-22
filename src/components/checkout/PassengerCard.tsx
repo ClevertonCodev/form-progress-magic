@@ -10,6 +10,7 @@ interface Props {
   passenger: Passenger;
   values: PassengerValues;
   open: boolean;
+  disabled: boolean;
   onToggle: () => void;
   onChange: (fieldId: string, value: string) => void;
 }
@@ -47,7 +48,7 @@ export function passengerProgress(passenger: Passenger, values: PassengerValues)
   return { filled, total: required.length, complete: filled === required.length };
 }
 
-export function PassengerCard({ passenger, values, open, onToggle, onChange }: Props) {
+export function PassengerCard({ passenger, values, open, disabled, onToggle, onChange }: Props) {
   const { filled, total, complete } = passengerProgress(passenger, values);
   const discounted = passenger.kind === "com-desconto";
 
@@ -56,8 +57,13 @@ export function PassengerCard({ passenger, values, open, onToggle, onChange }: P
       <button
         type="button"
         onClick={onToggle}
+        disabled={disabled}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-surface-subtle"
+        aria-disabled={disabled}
+        className={cn(
+          "flex w-full items-center gap-3 px-5 py-4 text-left transition-colors",
+          disabled ? "cursor-not-allowed opacity-60" : "hover:bg-surface-subtle",
+        )}
       >
         <span
           className={cn(
@@ -93,7 +99,10 @@ export function PassengerCard({ passenger, values, open, onToggle, onChange }: P
         </span>
 
         <ChevronDown
-          className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180",
+          )}
           aria-hidden
         />
       </button>

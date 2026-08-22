@@ -34,7 +34,7 @@ export const Route = createFileRoute("/")({
 function Checkout() {
   const [step, setStep] = useState<1 | 2>(1);
   const [accepted, setAccepted] = useState(false);
-  const [openIds, setOpenIds] = useState<string[]>(passengers.map((p) => p.id));
+  const [openIds, setOpenIds] = useState<string[]>([passengers[0]?.id ?? ""]);
   const [values, setValues] = useState<Record<string, PassengerValues>>({});
 
   // Paginação dos formulários
@@ -144,20 +144,24 @@ function Checkout() {
             {mode === "form-b" && <OrderSummary />}
 
             <div className="space-y-4">
-              {currentPassengers.map((p) => (
-                <PassengerCard
-                  key={p.id}
-                  passenger={p}
-                  values={values[p.id] ?? {}}
-                  open={openIds.includes(p.id)}
-                  onToggle={() =>
-                    setOpenIds((prev) =>
-                      prev.includes(p.id) ? prev.filter((id) => id !== p.id) : [...prev, p.id]
-                    )
-                  }
-                  onChange={(field, value) => update(p.id, field, value)}
-                />
-              ))}
+              {currentPassengers.map((p) => {
+                const previousProgress = p.index > 1 ? progress[p.index - 2] : undefined;
+                const unlocked = p.index === 1 || previousProgress?.complete === true;
+
+                return (
+                  <PassengerCard
+                    key={p.id}
+                    passenger={p}
+                    values={values[p.id] ?? {}}
+                    open={openIds.includes(p.id)}
+                    disabled={!unlocked}
+                    onToggle={() =>
+                      setOpenIds((prev) => (prev.includes(p.id) ? [] : [p.id]))
+                    }
+                    onChange={(field, value) => update(p.id, field, value)}
+                  />
+                );
+              })}
             </div>
 
             {totalPages > 1 && (
