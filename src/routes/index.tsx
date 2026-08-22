@@ -111,16 +111,19 @@ function Checkout() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8">
-        {showStepToggle && <StepToggle step={step} onChange={setStep} formsEnabled={accepted} />}
-
-        <h1 className={cn("text-2xl font-semibold tracking-tight text-foreground", showStepToggle && "mt-7")}>
-          {step === 1 ? "Termos de uso e resumo da compra" : "Dados dos passageiros"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {step === 1
-            ? "Leia e aceite os termos — a próxima etapa abre automaticamente."
-            : `Preencha os dados de cada passageiro. ${completedCount} de ${passengers.length} concluídos.`}
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              {step === 1 ? "Termos de uso e resumo da compra" : "Dados dos passageiros"}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {step === 1
+                ? "Leia e aceite os termos — a próxima etapa abre automaticamente."
+                : `Preencha os dados de cada passageiro. ${completedCount} de ${passengers.length} concluídos.`}
+            </p>
+          </div>
+          {showStepToggle && <StepToggle step={step} onChange={setStep} formsEnabled={accepted} />}
+        </div>
 
         {step === 1 ? (
           <div
