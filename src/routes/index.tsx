@@ -56,6 +56,7 @@ function Checkout() {
   );
   const completedCount = progress.filter((p) => p.complete).length;
   const allComplete = completedCount === passengers.length;
+  const showStepToggle = mode !== "no-form" && accepted;
 
   const update = (pid: string, fieldId: string, value: string) =>
     setValues((prev) => ({ ...prev, [pid]: { ...(prev[pid] ?? {}), [fieldId]: value } }));
@@ -110,11 +111,9 @@ function Checkout() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8">
-        {mode !== "no-form" && (
-          <StepToggle step={step} onChange={setStep} formsEnabled={accepted} />
-        )}
+        {showStepToggle && <StepToggle step={step} onChange={setStep} formsEnabled={accepted} />}
 
-        <h1 className={cn("text-2xl font-semibold tracking-tight text-foreground", mode !== "no-form" && "mt-7")}>
+        <h1 className={cn("text-2xl font-semibold tracking-tight text-foreground", showStepToggle && "mt-7")}>
           {step === 1 ? "Termos de uso e resumo da compra" : "Dados dos passageiros"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
