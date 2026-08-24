@@ -6,6 +6,7 @@ import { StepToggle } from "@/components/checkout/StepToggle";
 import { TermsStep } from "@/components/checkout/TermsStep";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { PassengerCard, passengerProgress, type PassengerValues } from "@/components/checkout/PassengerCard";
+import { RepeatDataCard } from "@/components/checkout/RepeatDataCard";
 import { passengers, subtotal } from "@/lib/checkout-data";
 import { cn } from "@/lib/utils";
 
