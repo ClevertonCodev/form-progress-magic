@@ -161,25 +161,15 @@ function Checkout() {
             {mode === "form-b" && <OrderSummary />}
 
             {step === 3 && (
-              <div className="rounded-lg border border-border bg-surface-subtle p-5">
-                <h3 className="text-sm font-semibold text-foreground">Repetir dados?</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Deseja repetir os dados preenchidos na primeira atividade para esta?
-                </p>
-                <div className="mt-4 flex gap-3">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => {
-                      setValues2(values);
-                      setOpenIds([passengers[0]?.id ?? ""]);
-                    }}
-                  >
-                    Sim, preencher com os mesmos dados
-                  </Button>
-                </div>
-              </div>
+              <RepeatDataCard
+                passengerCount={passengers.length}
+                onCopy={() => {
+                  setValues2(values);
+                  setOpenIds([passengers[0]?.id ?? ""]);
+                }}
+              />
             )}
+
 
             <div className="space-y-4">
               {currentPassengers.map((p) => {
